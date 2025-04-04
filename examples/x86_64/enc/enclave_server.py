@@ -4,6 +4,8 @@ import re
 
 pod_name = os.getenv("POD_NAME", "unknown-0")
 
+print("pod_name:", pod_name)
+
 # List of ports (define as per requirement)
 PORTS = [5005, 5006, 5007, 5008, 5009]
 
@@ -14,9 +16,13 @@ if match:
 else:
     index = 0  # Default index if extraction fails
 
+print("index:", index)
+
 #VSOCK_PORT = 5005  # Choose a port for communication
 
 VSOCK_PORT = PORTS[index % len(PORTS)]
+
+print("VSOCK_PORT:", VSOCK_PORT)
 
 #VSOCK_PORT = 5005  # Choose a port for communication
 
