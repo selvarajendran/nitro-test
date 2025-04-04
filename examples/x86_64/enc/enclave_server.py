@@ -1,5 +1,6 @@
 import socket
 import os
+import re
 
 pod_name = os.getenv("POD_NAME", "unknown-0")
 
