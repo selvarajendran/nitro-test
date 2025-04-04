@@ -1,6 +1,23 @@
 import socket
+import os
 
-VSOCK_PORT = 5005  # Choose a port for communication
+pod_name = os.getenv("POD_NAME", "unknown-0")
+
+# List of ports (define as per requirement)
+PORTS = [5005, 5006, 5007, 5008, 5009]
+
+# Extract the index from the pod name
+match = re.search(r"-(\d+)$", pod_name)
+if match:
+    index = int(match.group(1))
+else:
+    index = 0  # Default index if extraction fails
+
+#VSOCK_PORT = 5005  # Choose a port for communication
+
+VSOCK_PORT = PORTS[index % len(PORTS)]
+
+#VSOCK_PORT = 5005  # Choose a port for communication
 
 # Create a vsock server socket
 server = socket.socket(socket.AF_VSOCK, socket.SOCK_STREAM)
