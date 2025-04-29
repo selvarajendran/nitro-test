@@ -1,8 +1,23 @@
 import socket
 import os
 import re
+import boto3
 
 pod_name = os.getenv("POD_NAME", "unknown-0")
+
+kms_client = boto3.client('kms', region_name='us-east-1')  # Specify your region here
+
+plaintext = b"Hello, this is a secret message!"
+
+# Encrypt the data
+response = kms_client.encrypt(
+    KeyId='arn:aws:kms:us-east-1:798842239772:key/mrk-965d65eaa5cb4ca2b49cea0bea3ae2e1',  # Replace with your actual key ARN
+    Plaintext=plaintext
+)
+
+ciphertext_blob = response['CiphertextBlob']
+
+print("Encrypted data", ciphertext_blob)
 
 print("pod_name:", pod_name)
 
