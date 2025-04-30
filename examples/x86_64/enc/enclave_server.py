@@ -1,60 +1,25 @@
-import socket
-import os
-import re
-import boto3
+from aws_kms import AwsKmsClient
+import base64
 
-pod_name = os.getenv("POD_NAME", "unknown-0")
+# Port should match the port where kms-server is running (on the host)
+VSOCK_PORT = 8001  # default port for kms-server
+KEY_ID = "arn:aws:kms:us-east-1:798842239772:key/mrk-965d65eaa5cb4ca2b49cea0bea3ae2e1"
 
-kms_client = boto3.client('kms', region_name='us-east-1')  # Specify your region here
+def main():
+    # Connect to KMS server on host via vsock
+    client = AwsKmsClient(vsock_port=VSOCK_PORT)
 
-plaintext = b"Hello, this is a secret message!"
+    # Request to generate a data key
+    print("[*] Requesting data key from KMS...")
+    response = client.generate_data_key(key_id=KEY_ID, key_spec='AES_256')
 
-# Encrypt the data
-response = kms_client.encrypt(
-    KeyId='arn:aws:kms:us-east-1:798842239772:key/mrk-965d65eaa5cb4ca2b49cea0bea3ae2e1',  # Replace with your actual key ARN
-    Plaintext=plaintext
-)
+    # Encrypted key (can be stored)
+    encrypted_key_b64 = base64.b64encode(response['CiphertextBlob']).decode()
+    print("[+] Encrypted data key (base64):", encrypted_key_b64)
 
-ciphertext_blob = response['CiphertextBlob']
+    # Plaintext key (use this for actual encryption, but don’t store it!)
+    plaintext_key = base64.b64encode(response['Plaintext']).decode()
+    print("[+] Plaintext data key (base64):", plaintext_key)
 
-print("Encrypted data", ciphertext_blob)
-
-print("pod_name:", pod_name)
-
-# List of ports (define as per requirement)
-PORTS = [5005, 5006, 5007, 5008, 5009]
-
-# Extract the index from the pod name
-match = re.search(r"-(\d+)$", pod_name)
-if match:
-    index = int(match.group(1))
-else:
-    index = 0  # Default index if extraction fails
-
-print("index:", index)
-
-#VSOCK_PORT = 5005  # Choose a port for communication
-
-VSOCK_PORT = PORTS[index % len(PORTS)]
-
-print("VSOCK_PORT:", VSOCK_PORT)
-
-#VSOCK_PORT = 5005  # Choose a port for communication
-
-# Create a vsock server socket
-server = socket.socket(socket.AF_VSOCK, socket.SOCK_STREAM)
-server.bind((socket.VMADDR_CID_ANY, VSOCK_PORT))
-server.listen(1)
-
-print(f"Enclave listening on vsock port {VSOCK_PORT}...")
-
-while True:
-    try:
-        conn, _ = server.accept()
-        data = conn.recv(1024)
-        print("Received:", data.decode())
-        conn.sendall(b"Hello from Enclave!")
-        conn.close()
-    except Exception as e:
-        print(f"Error: {e}")
-        time.sleep(1)  # Prevent high CPU usage if looping
+if __name__ == "__main__":
+    main()
