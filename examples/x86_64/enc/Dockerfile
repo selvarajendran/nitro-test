@@ -1,25 +1,28 @@
 FROM amazonlinux:2
 
-# Install dependencies
 RUN yum install -y \
     python3 \
     python3-pip \
     git \
     gcc \
     make \
+    unzip \
+    curl \
     protobuf-devel \
     grpc-devel \
     openssl-devel \
     cmake \
-    && yum clean all
+    ca-certificates \
+ && update-ca-trust force-enable \
+ && update-ca-trust extract \
+ && yum clean all
 
-# Clone and install aws-nitro-enclaves-sdk-python
-RUN git clone https://github.com/aws/aws-nitro-enclaves-sdk-python.git /sdk \
-    && cd /sdk \
+# Download SDK
+RUN curl -L -o sdk.zip https://github.com/aws/aws-nitro-enclaves-sdk-python/archive/refs/heads/main.zip \
+    && unzip sdk.zip \
+    && cd aws-nitro-enclaves-sdk-python-main \
     && pip3 install .
 
-# Copy your enclave app
 COPY enclave_server.py /app/enclave_server.py
 WORKDIR /app
-
 ENTRYPOINT ["python3", "enclave_server.py"]
