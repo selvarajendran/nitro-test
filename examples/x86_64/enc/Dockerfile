@@ -1,29 +1,10 @@
-FROM amazonlinux:2
+FROM alpine:latest
 
-# Install base dependencies
-RUN yum install -y \
-    python3 \
-    python3-pip \
-    git \
-    gcc \
-    make \
-    protobuf-devel \
-    grpc-devel \
-    openssl-devel \
-    cmake \
-    ca-certificates \
- && update-ca-trust force-enable \
- && update-ca-trust extract \
- && yum clean all
+RUN apk add --no-cache python3 py3-pip
+#RUN pip install --no-cache-dir boto3
 
-# Clone and install Nitro Enclaves Python SDK
-RUN git config --global http.sslVerify false \
- && git clone https://github.com/aws/aws-nitro-enclaves-sdk-python.git /sdk \
- && cd /sdk \
- && pip3 install .
+RUN pip install --no-cache-dir --break-system-packages boto3
 
-# Copy your enclave app
 COPY enclave_server.py /app/enclave_server.py
-WORKDIR /app
 
-ENTRYPOINT ["python3", "enclave_server.py"]
+CMD ["python3", "/app/enclave_server.py"]
